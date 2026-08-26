@@ -22,7 +22,7 @@ const SOURCE_LOCATION_PLUGIN_PATH = SOURCE_LOCATION_PLUGIN_CANDIDATES.find((path
  * - outDir 'dist' / assetsDir 'assets' — 归一化产物目录
  */
 export default defineConfig({
-  base: "/daily-review-workbench/",
+  base: "/",
   plugins: [
     tailwindcss(),
     TanStackRouterVite(),
