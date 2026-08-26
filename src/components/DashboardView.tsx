@@ -235,9 +235,9 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
     const lifestyleYi = phaseRule.yi.filter((item) => !yi.includes(item)).slice(0, 4);
     const lifestyleJi = phaseRule.ji.filter((item) => !ji.includes(item)).slice(0, 4);
 
-    // 真实黄历在前，生活化习惯在后
-    const allYi = [...yi, ...lifestyleYi];
-    const allJi = [...ji, ...lifestyleJi];
+    // 生活化习惯在前（先显示），真实黄历在后
+    const allYi = [...lifestyleYi, ...yi];
+    const allJi = [...lifestyleJi, ...ji];
 
     // 运势（保留基于日期的确定性取档，风格不变）
     const seed = year * 10000 + month * 100 + day;
@@ -450,11 +450,11 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                     key={item}
                     className={cn(
                       "px-2 py-0.5 text-xs rounded border",
-                      index >= almanacData.yi.length - 4
+                      index < 4
                         ? "bg-amber-50 text-amber-700 border-amber-100"
                         : "bg-red-50 text-red-700 border-red-100 font-medium"
                     )}
-                    title={index >= almanacData.yi.length - 4 ? "生活习惯" : "今日宜做"}
+                    title={index < 4 ? "生活习惯" : "今日宜做"}
                   >
                     {item}
                   </span>
@@ -474,11 +474,11 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                     key={item}
                     className={cn(
                       "px-2 py-0.5 text-xs rounded border",
-                      index >= almanacData.ji.length - 4
+                      index < 4
                         ? "bg-slate-100 text-slate-600 border-slate-200"
                         : "bg-gray-100 text-gray-700 border-gray-200 font-medium"
                     )}
-                    title={index >= almanacData.ji.length - 4 ? "生活习惯" : "今日忌做"}
+                    title={index < 4 ? "生活习惯" : "今日忌做"}
                   >
                     {item}
                   </span>
