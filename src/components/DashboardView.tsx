@@ -203,8 +203,23 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
     const yi = lunar.getDayYi();
     const ji = lunar.getDayJi();
 
-    // 运势（保留基于日期的确定性取档，风格不变）
+    // 生活化习惯提示：在真实宜忌之后追加 4 条（基于日期确定性挑选，去重避免与真实宜忌重复）
+    const habitYi = ['阅读', '冥想', '运动', '学习', '早睡', '早起', '整理', '规划', '复盘', '喝水', '拉伸', '写作', '散步', '陪伴家人', '听音乐', '写日记'];
+    const habitJi = ['熬夜', '拖延', '暴饮暴食', '久坐', '冲动消费', '过度刷手机', '焦虑', '抱怨', '生气', '赖床', '夜宵', '沉迷游戏', '久站', '饮食不规律', '思虑过度', '杂乱无章'];
     const seed = year * 10000 + month * 100 + day;
+    const lifestyleYi: string[] = [];
+    const lifestyleJi: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const yiItem = habitYi[(seed + i * 5) % habitYi.length];
+      if (!yi.includes(yiItem) && !lifestyleYi.includes(yiItem)) lifestyleYi.push(yiItem);
+      const jiItem = habitJi[(seed + i * 7) % habitJi.length];
+      if (!ji.includes(jiItem) && !lifestyleJi.includes(jiItem)) lifestyleJi.push(jiItem);
+    }
+    // 真实黄历在前，生活化习惯在后
+    const allYi = [...yi, ...lifestyleYi];
+    const allJi = [...ji, ...lifestyleJi];
+
+    // 运势（保留基于日期的确定性取档，风格不变）
     const fortunes = ['大吉', '吉', '平', '凶', '大凶'];
     const fortuneIndex = seed % fortunes.length;
     const fortune = fortunes[fortuneIndex];
@@ -216,7 +231,7 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
       '大凶': 'text-purple-600 bg-purple-50 border-purple-200',
     };
 
-    return { lunarDate, yi, ji, fortune, fortuneStyle: fortuneColors[fortune] };
+    return { lunarDate, yi: allYi, ji: allJi, fortune, fortuneStyle: fortuneColors[fortune] };
   }, [selectedDate]);
 
   const StreakBadge = ({ streak, categoryColor }: { streak: number; categoryColor: string }) => {
@@ -409,16 +424,16 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                 <span className="text-sm text-gray-500">今日宜做</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {almanacData.yi.slice(0, 8).map((item, index) => (
+                {almanacData.yi.slice(0, 12).map((item, index) => (
                   <span
                     key={item}
                     className={cn(
                       "px-2 py-0.5 text-xs rounded border",
-                      index < 4
-                        ? "bg-red-50 text-red-700 border-red-100 font-medium"
-                        : "bg-amber-50 text-amber-700 border-amber-100"
+                      index >= almanacData.yi.length - 4
+                        ? "bg-amber-50 text-amber-700 border-amber-100"
+                        : "bg-red-50 text-red-700 border-red-100 font-medium"
                     )}
-                    title="今日宜做"
+                    title={index >= almanacData.yi.length - 4 ? "生活习惯" : "今日宜做"}
                   >
                     {item}
                   </span>
@@ -433,16 +448,16 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                 <span className="text-sm text-gray-500">今日忌做</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {almanacData.ji.slice(0, 8).map((item, index) => (
+                {almanacData.ji.slice(0, 12).map((item, index) => (
                   <span
                     key={item}
                     className={cn(
                       "px-2 py-0.5 text-xs rounded border",
-                      index < 4
-                        ? "bg-gray-100 text-gray-700 border-gray-200 font-medium"
-                        : "bg-slate-100 text-slate-600 border-slate-200"
+                      index >= almanacData.ji.length - 4
+                        ? "bg-slate-100 text-slate-600 border-slate-200"
+                        : "bg-gray-100 text-gray-700 border-gray-200 font-medium"
                     )}
-                    title="今日忌做"
+                    title={index >= almanacData.ji.length - 4 ? "生活习惯" : "今日忌做"}
                   >
                     {item}
                   </span>
