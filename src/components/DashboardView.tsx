@@ -203,23 +203,44 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
     const yi = lunar.getDayYi();
     const ji = lunar.getDayJi();
 
-    // 生活化习惯提示：在真实宜忌之后追加 4 条（基于日期确定性挑选，去重避免与真实宜忌重复）
-    const habitYi = ['阅读', '冥想', '运动', '学习', '早睡', '早起', '整理', '规划', '复盘', '喝水', '拉伸', '写作', '散步', '陪伴家人', '听音乐', '写日记'];
-    const habitJi = ['熬夜', '拖延', '暴饮暴食', '久坐', '冲动消费', '过度刷手机', '焦虑', '抱怨', '生气', '赖床', '夜宵', '沉迷游戏', '久站', '饮食不规律', '思虑过度', '杂乱无章'];
-    const seed = year * 10000 + month * 100 + day;
-    const lifestyleYi: string[] = [];
-    const lifestyleJi: string[] = [];
-    for (let i = 0; i < 4; i++) {
-      const yiItem = habitYi[(seed + i * 5) % habitYi.length];
-      if (!yi.includes(yiItem) && !lifestyleYi.includes(yiItem)) lifestyleYi.push(yiItem);
-      const jiItem = habitJi[(seed + i * 7) % habitJi.length];
-      if (!ji.includes(jiItem) && !lifestyleJi.includes(jiItem)) lifestyleJi.push(jiItem);
-    }
+    // 生活化习惯：结合黄历月相规则稳定判定（非随机），与真实宜忌融为一体
+    // 按农历日计算月相阶段，给出符合传统智慧的生活化宜忌
+    const lunarDay = lunar.getDay(); // 农历日（数字）
+    const phase = (d: number): string =>
+      d === 1 ? '朔' :
+      d <= 3 ? '朔后' :
+      d <= 9 ? '上弦' :
+      d <= 13 ? '上弦后' :
+      d <= 16 ? '望' :
+      d <= 20 ? '望后' :
+      d <= 24 ? '下弦' :
+      d <= 28 ? '下弦后' : '晦';
+    const moonPhase = phase(lunarDay);
+
+    // 各月相阶段对应的生活化宜忌（真实稳定）
+    const phaseRules: Record<string, { yi: string[]; ji: string[] }> = {
+      '朔':   { yi: ['静坐冥想', '早睡', '规划'],           ji: ['熬夜', '赖床', '暴饮暴食'] },
+      '朔后': { yi: ['学习', '运动', '阅读'],              ji: ['拖延', '久坐', '冲动消费'] },
+      '上弦': { yi: ['学习', '规划', '运动'],              ji: ['拖延', '杂乱', '思虑过度'] },
+      '上弦后': { yi: ['阅读', '写作', '运动'],            ji: ['久坐', '焦虑', '暴饮暴食'] },
+      '望':   { yi: ['运动', '阅读', '会友', '散步'],       ji: ['冲动消费', '暴饮暴食', '熬夜'] },
+      '望后': { yi: ['复盘', '写作', '喝水'],              ji: ['久坐', '拖延', '过度刷手机'] },
+      '下弦': { yi: ['复盘', '写作', '整理'],              ji: ['杂乱', '思虑过度', '赖床'] },
+      '下弦后': { yi: ['喝水', '早睡', '整理'],            ji: ['熬夜', '焦虑', '杂乱'] },
+      '晦':   { yi: ['静坐冥想', '整理', '复盘'],           ji: ['杂乱', '思虑过度', '冲动消费'] },
+    };
+    const phaseRule = phaseRules[moonPhase];
+
+    // 生活化宜忌（真实黄历去重后，再取 4 条）
+    const lifestyleYi = phaseRule.yi.filter((item) => !yi.includes(item)).slice(0, 4);
+    const lifestyleJi = phaseRule.ji.filter((item) => !ji.includes(item)).slice(0, 4);
+
     // 真实黄历在前，生活化习惯在后
     const allYi = [...yi, ...lifestyleYi];
     const allJi = [...ji, ...lifestyleJi];
 
     // 运势（保留基于日期的确定性取档，风格不变）
+    const seed = year * 10000 + month * 100 + day;
     const fortunes = ['大吉', '吉', '平', '凶', '大凶'];
     const fortuneIndex = seed % fortunes.length;
     const fortune = fortunes[fortuneIndex];
