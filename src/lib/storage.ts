@@ -1,5 +1,6 @@
 // localStorage 数据管理
 import type { AppData, Project, DailyRecord, DateData } from '@/types';
+import { formatDateLocal } from './utils';
 
 const STORAGE_KEY = 'daily-review-workbench-v1';
 
@@ -191,7 +192,7 @@ export const PRESET_PROJECTS: Project[] = [
 function getYesterday(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  return formatDateLocal(d);
 }
 
 // 预置昨天数据
@@ -314,7 +315,7 @@ export function copyYesterdayToToday(
 ): Record<string, DateData> {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = formatDateLocal(yesterday);
   const yesterdayData = getDateData(records, yesterdayStr);
 
   return {

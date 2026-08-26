@@ -2,6 +2,7 @@
 import type { Project, DailyRecord, DateData, AppData, ProjectCategory } from '@/types';
 import { CATEGORY_COLORS } from '@/types';
 import { checkProjectCompleted, groupProjectsByCategory } from './utils-project';
+import { formatDateLocal } from './utils';
 
 export { groupProjectsByCategory };
 
@@ -11,19 +12,19 @@ export type TimeRange = '近7天' | '本周' | '上周' | '本月' | '上月';
 // 获取日期范围
 export function getDateRange(timeRange: TimeRange): { start: string; end: string } {
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = formatDateLocal(today);
 
   switch (timeRange) {
     case '近7天': {
       const start = new Date(today);
       start.setDate(start.getDate() - 6);
-      return { start: start.toISOString().split('T')[0], end: todayStr };
+      return { start: formatDateLocal(start), end: todayStr };
     }
     case '本周': {
       const dayOfWeek = today.getDay();
       const start = new Date(today);
       start.setDate(today.getDate() - dayOfWeek + 1); // 周一
-      return { start: start.toISOString().split('T')[0], end: todayStr };
+      return { start: formatDateLocal(start), end: todayStr };
     }
     case '上周': {
       const dayOfWeek = today.getDay();
@@ -31,16 +32,16 @@ export function getDateRange(timeRange: TimeRange): { start: string; end: string
       end.setDate(today.getDate() - dayOfWeek); // 上周日
       const start = new Date(end);
       start.setDate(end.getDate() - 6); // 上周一
-      return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
+      return { start: formatDateLocal(start), end: formatDateLocal(end) };
     }
     case '本月': {
       const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      return { start: start.toISOString().split('T')[0], end: todayStr };
+      return { start: formatDateLocal(start), end: todayStr };
     }
     case '上月': {
       const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const end = new Date(today.getFullYear(), today.getMonth(), 0);
-      return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0] };
+      return { start: formatDateLocal(start), end: formatDateLocal(end) };
     }
     default:
       return { start: todayStr, end: todayStr };
@@ -54,7 +55,7 @@ export function getDatesInRange(start: string, end: string): string[] {
   const endDate = new Date(end);
 
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    dates.push(d.toISOString().split('T')[0]);
+    dates.push(formatDateLocal(d));
   }
   return dates;
 }
@@ -70,7 +71,7 @@ export function getWeekDates(date: string): string[] {
   for (let i = 0; i < 7; i++) {
     const current = new Date(monday);
     current.setDate(monday.getDate() + i);
-    dates.push(current.toISOString().split('T')[0]);
+    dates.push(formatDateLocal(current));
   }
   return dates;
 }
@@ -120,7 +121,7 @@ export function calculateStreak(
 
   // 向前追溯
   while (true) {
-    const dateStr = checkDate.toISOString().split('T')[0];
+    const dateStr = formatDateLocal(checkDate);
     const dateData = records[dateStr];
 
     if (!dateData || !dateData.records[project.id]) {
@@ -213,7 +214,7 @@ export function calculateNumericTrend(
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = formatDateLocal(d);
     dates.push(dateStr);
 
     const dateData = records[dateStr];
@@ -260,7 +261,7 @@ export function getMonthCalendar(
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateLocal(date);
 
     if (dayOfWeek === 0 && day > 1) {
       week++;

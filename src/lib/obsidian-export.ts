@@ -1,6 +1,7 @@
 // Obsidian Markdown 导出
 import type { AppData, Project, DateData, DailyRecord } from '@/types';
 import { checkProjectCompleted } from './utils-project';
+import { formatDateLocal } from './utils';
 
 // 简单 ZIP 打包实现（零依赖）
 class SimpleZip {
@@ -114,14 +115,14 @@ function getExportDates(range: '全部' | '本月' | '上周' | '自定义', cus
       const start = new Date(end);
       start.setDate(end.getDate() - 6);
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dates.push(d.toISOString().split('T')[0]);
+        dates.push(formatDateLocal(d));
       }
       break;
     }
     case '自定义':
       if (customRange) {
         for (let d = new Date(customRange.start); d <= new Date(customRange.end); d.setDate(d.getDate() + 1)) {
-          dates.push(d.toISOString().split('T')[0]);
+          dates.push(formatDateLocal(d));
         }
       }
       break;

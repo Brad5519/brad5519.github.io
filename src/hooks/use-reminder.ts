@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { AppData, Project } from '@/types';
 import { getDateData } from '@/lib/storage';
+import { formatDateLocal } from '@/lib/utils';
 
 interface ReminderSettings {
   enabled: boolean;
@@ -46,7 +47,7 @@ export function useReminder(data: AppData): ReminderState {
 
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const today = now.toISOString().split('T')[0];
+    const today = formatDateLocal(now);
 
     // 如果今天已经提醒过了，不再提醒
     if (lastReminderDateRef.current === today) {

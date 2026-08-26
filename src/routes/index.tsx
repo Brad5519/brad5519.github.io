@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { AppData, Project, DateData } from '@/types';
 import type { TimeRange } from '@/lib/stats-utils';
 import { loadData, saveData } from '@/lib/storage';
+import { formatDateLocal } from '@/lib/utils';
 import { DashboardView } from '@/components/DashboardView';
 import { RecordView } from '@/components/RecordView';
 import { ProjectView } from '@/components/ProjectView';
@@ -22,7 +23,7 @@ function Index() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [statsTimeRange, setStatsTimeRange] = useState<TimeRange>('本周');
   const [data, setData] = useState<AppData>(() => loadData());
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => formatDateLocal(new Date()));
 
   // 自动保存到 localStorage
   useEffect(() => {

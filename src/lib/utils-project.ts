@@ -1,6 +1,7 @@
 // 项目工具函数
 import type { Project, DailyRecord, ProjectStatus, ProjectCategory } from '@/types';
 import { CATEGORY_COLORS } from '@/types';
+import { formatDateLocal } from './utils';
 
 // 检查项目是否完成
 export function checkProjectCompleted(project: Project, record: DailyRecord | null): boolean {
@@ -169,7 +170,7 @@ export function checkConsecutiveMissing(
   for (let i = 1; i <= days; i++) {
     const d = new Date(current);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = formatDateLocal(d);
     const dateData = records[dateStr];
 
     if (!dateData || !dateData.records[pid] || dateData.records[pid].value === null) {
@@ -195,7 +196,7 @@ export function checkConsecutiveFailed(
   for (let i = 1; i <= days; i++) {
     const d = new Date(current);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = formatDateLocal(d);
     const dateData = records[dateStr];
 
     if (!dateData || !dateData.records[pid]) {

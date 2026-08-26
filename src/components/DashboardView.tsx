@@ -7,7 +7,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { ChevronDown, ChevronUp, CheckCircle2, Circle, AlertCircle, Coins, Calendar as CalendarIcon, Flame, Sparkles, ScrollText, Bell, X } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { cn, formatDateLocal } from '@/lib/utils';
+import { Solar } from 'lunar-javascript';
 import type { AppData, Project, ProjectCategory, DailyRecord } from '@/types';
 import { CATEGORY_COLORS, DAILY_QUOTES } from '@/types';
 import { getProjectStatus, checkConsecutiveMissing, checkConsecutiveFailed, groupProjectsByCategory, checkProjectCompleted } from '@/lib/utils-project';
@@ -34,8 +35,8 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [dateOpen, setDateOpen] = useState(false);
 
-  const today = new Date().toISOString().split('T')[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const today = formatDateLocal(new Date());
+  const yesterday = formatDateLocal(new Date(Date.now() - 86400000));
 
   const enabledProjects = useMemo(() => {
     return data.projects.filter((p) => p.enabled).sort((a, b) => a.sort - b.sort);
@@ -184,51 +185,26 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
   const categories = Object.keys(groupedProjects) as ProjectCategory[];
   const shouldCollapse = enabledProjects.length > 8;
 
-  // 黄历数据生成（基于日期的确定性算法）
+  // 黄历数据生成（基于真实农历库 lunar-javascript）
   const almanacData = useMemo(() => {
     const date = new Date(selectedDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const day = date.getDate();
 
-    // 农历月份和日期（简化算法）
-    const lunarMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
-    const lunarDays = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
-      '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
-      '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
+    // 用真实农历库转换，得到准确的农历日期与宜忌
+    const solar = Solar.fromYmd(year, month, day);
+    const lunar = solar.getLunar();
 
-    // 基于日期生成伪农历日期（确定性）
-    const lunarMonthIndex = (year * 12 + month + day) % 12;
-    const lunarDayIndex = (year + month * 31 + day) % 30;
-    const lunarDate = `${lunarMonths[lunarMonthIndex]}${lunarDays[lunarDayIndex]}`;
+    // 农历日期：如"七月十五"
+    const lunarDate = `${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;
 
-    // 宜忌事项池 - 分为传统黄历和生活习惯两类
-    const traditionalYi = ['出行', '签约', '会友', '嫁娶', '纳采', '开市', '交易', '立券', '安床', '修造', '动土', '上梁', '祭祀', '祈福', '求嗣', '开光'];
-    const traditionalJi = ['安葬', '破土', '行丧', '词讼', '开仓', '出货', '针灸', '伐木', '栽种', '牧养', '纳畜', '迁徙', '掘井', '作灶', '入宅'];
-    const habitYi = ['学习', '运动', '阅读', '冥想', '早睡', '早起', '整理', '规划', '复盘', '喝水', '拉伸', '写作'];
-    const habitJi = ['熬夜', '拖延', '暴饮暴食', '久坐', '冲动消费', '过度刷手机', '焦虑', '抱怨', '生气', '赖床', '夜宵'];
+    // 真实黄历宜忌
+    const yi = lunar.getDayYi();
+    const ji = lunar.getDayJi();
 
-    // 基于日期确定性选择宜忌
+    // 运势（保留基于日期的确定性取档，风格不变）
     const seed = year * 10000 + month * 100 + day;
-    const yi: string[] = [];
-    const ji: string[] = [];
-
-    // 先选传统黄历事项（4个）
-    for (let i = 0; i < 4; i++) {
-      const yiIndex = (seed + i * 7) % traditionalYi.length;
-      const jiIndex = (seed + i * 11) % traditionalJi.length;
-      if (!yi.includes(traditionalYi[yiIndex])) yi.push(traditionalYi[yiIndex]);
-      if (!ji.includes(traditionalJi[jiIndex])) ji.push(traditionalJi[jiIndex]);
-    }
-    // 再选生活习惯事项（4个）
-    for (let i = 0; i < 4; i++) {
-      const yiIndex = (seed + i * 13) % habitYi.length;
-      const jiIndex = (seed + i * 17) % habitJi.length;
-      if (!yi.includes(habitYi[yiIndex])) yi.push(habitYi[yiIndex]);
-      if (!ji.includes(habitJi[jiIndex])) ji.push(habitJi[jiIndex]);
-    }
-
-    // 运势（基于日期）
     const fortunes = ['大吉', '吉', '平', '凶', '大凶'];
     const fortuneIndex = seed % fortunes.length;
     const fortune = fortunes[fortuneIndex];
@@ -433,7 +409,7 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                 <span className="text-sm text-gray-500">今日宜做</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {almanacData.yi.map((item, index) => (
+                {almanacData.yi.slice(0, 8).map((item, index) => (
                   <span
                     key={item}
                     className={cn(
@@ -442,7 +418,7 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                         ? "bg-red-50 text-red-700 border-red-100 font-medium"
                         : "bg-amber-50 text-amber-700 border-amber-100"
                     )}
-                    title={index < 4 ? "传统黄历" : "生活习惯"}
+                    title="今日宜做"
                   >
                     {item}
                   </span>
@@ -457,7 +433,7 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                 <span className="text-sm text-gray-500">今日忌做</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {almanacData.ji.map((item, index) => (
+                {almanacData.ji.slice(0, 8).map((item, index) => (
                   <span
                     key={item}
                     className={cn(
@@ -466,7 +442,7 @@ export function DashboardView({ data, selectedDate, onDateChange, onJumpToStats 
                         ? "bg-gray-100 text-gray-700 border-gray-200 font-medium"
                         : "bg-slate-100 text-slate-600 border-slate-200"
                     )}
-                    title={index < 4 ? "传统黄历" : "生活习惯"}
+                    title="今日忌做"
                   >
                     {item}
                   </span>
